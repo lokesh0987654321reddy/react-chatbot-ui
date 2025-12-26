@@ -8,10 +8,10 @@ const SettingsPage = () => {
   const [model, setModel] = useState("gpt-3.5");
 
   return (
-  <div className="w-full min-h-screen h-full bg-gradient-to-br from-blue-100 via-white to-blue-200 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 rounded-2xl shadow-2xl flex flex-col font-sans border border-blue-200 dark:border-gray-800 justify-center mx-auto px-2 sm:px-4 md:px-8 py-4">
-      <div className="flex-1 p-4 sm:p-8 flex flex-col items-center justify-center min-h-[240px] w-full">
-        <h2 className="text-2xl sm:text-3xl font-extrabold mb-6 sm:mb-8 text-blue-700 dark:text-white text-center drop-shadow">⚙️ Settings</h2>
-        <div className="space-y-6 sm:space-y-8 w-full max-w-xs sm:max-w-md mx-auto">
+  <div className="w-full h-full bg-gradient-to-br from-blue-100 via-white to-blue-200 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 rounded-2xl shadow-2xl flex flex-col font-sans border border-blue-200 dark:border-gray-800 justify-center mx-auto">
+      <div className="flex-1 p-8 flex flex-col items-center justify-center min-h-[240px]">
+        <h2 className="text-3xl font-extrabold mb-8 text-blue-700 dark:text-white text-center drop-shadow">⚙️ Settings</h2>
+        <div className="space-y-8 w-full max-w-md">
           <div>
             <label className="font-semibold text-blue-700 dark:text-white block mb-2">Theme</label>
             <select value={theme} onChange={e => setTheme(e.target.value)} className="w-full px-4 py-3 border border-blue-300 dark:border-gray-700 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white dark:bg-gray-900 dark:text-white shadow-sm">

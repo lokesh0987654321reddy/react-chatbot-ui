@@ -13,7 +13,7 @@ const Sidebar = () => (
       AI Chatbot
     </div>
     <nav className="flex-1 p-6 flex flex-col gap-2">
-      <Link to="/" className="block py-2 px-4 rounded-lg text-blue-700 dark:text-white font-semibold hover:bg-blue-100 dark:hover:bg-gray-800 transition">🏠 Home</Link>
+      <Link to="/landing" className="block py-2 px-4 rounded-lg text-blue-700 dark:text-white font-semibold hover:bg-blue-100 dark:hover:bg-gray-800 transition">🏠 Home</Link>
       <Link to="/chat" className="block py-2 px-4 rounded-lg text-blue-700 dark:text-white font-semibold hover:bg-blue-100 dark:hover:bg-gray-800 transition">💬 New Chat</Link>
       <Link to="/settings" className="block py-2 px-4 rounded-lg text-blue-700 dark:text-white font-semibold hover:bg-blue-100 dark:hover:bg-gray-800 transition">⚙️ Settings</Link>
       <div className="mt-8">

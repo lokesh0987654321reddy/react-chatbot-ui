@@ -1,26 +1,48 @@
 import React, { useState, useRef, useEffect } from "react";
+import { sendMessage } from "../services/chatService";
 
 const Chatbot = () => {
   const [messages, setMessages] = useState([
     { text: "Hello! How can I help you today?", sender: "bot" }
   ]);
+  const [typing, setTyping] = useState("");
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (input.trim() === "" || loading) return;
-    setMessages([...messages, { text: input, sender: "user" }]);
+    const userMessage = input;
+    setMessages([...messages, { text: userMessage, sender: "user" }]);
     setInput("");
     setLoading(true);
-    // Simulate bot response
-    setTimeout(() => {
+    setTyping("");
+    try {
+      const response = await sendMessage(userMessage);
+      const botText = response.response || "(No response)";
+      // Typing animation
+      let i = 0;
+      setTyping("");
+      const typeInterval = setInterval(() => {
+        i++;
+        setTyping(botText.slice(0, i));
+        if (i >= botText.length) {
+          clearInterval(typeInterval);
+          setMessages((prev) => [
+            ...prev,
+            { text: botText, sender: "bot" }
+          ]);
+          setTyping("");
+          setLoading(false);
+        }
+      }, 25); // Adjust speed as needed
+    } catch (error) {
       setMessages((prev) => [
         ...prev,
-        { text: "You said: " + input, sender: "bot" }
+        { text: "Error: Unable to get response from server.", sender: "bot" }
       ]);
       setLoading(false);
-    }, 500);
+    }
   };
 
   // Send on Enter key
@@ -70,6 +92,18 @@ const Chatbot = () => {
             )}
           </div>
         ))}
+        {/* Typing animation for bot */}
+        {typing && (
+          <div className="flex items-start mb-3">
+            <div className="mr-2 flex-shrink-0">
+              <span className="inline-block w-8 h-8 rounded-full bg-blue-200 dark:bg-blue-900 flex items-center justify-center text-xl">🤖</span>
+            </div>
+            <div className="bg-white dark:bg-gray-800 text-blue-700 dark:text-blue-200 rounded-xl p-3 text-left max-w-[80%] shadow-sm border border-blue-100 dark:border-gray-700 font-mono">
+              {typing}
+              <span className="animate-pulse">|</span>
+            </div>
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </div>
       <div className="flex border-t border-blue-200 p-4 bg-blue-50 dark:bg-gray-900 rounded-b-2xl">
