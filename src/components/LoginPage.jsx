@@ -1,5 +1,8 @@
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { loginUser } from "../services/authService";
+
 
 // Animated gradient blob CSS
 const blobStyles = `
@@ -19,13 +22,28 @@ const blobKeyframes = `
 }
 `;
 
-const LoginPage = ({ onLogin }) => {
-  const handleSubmit = (e) => {
+const LoginPage = () => {
+  const navigate = useNavigate();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (onLogin) onLogin();
+    setError("");
+
+    try {
+      const response = await loginUser(email, password);
+      navigate("/landing");
+    } catch (err) {
+      setError("Invalid email or password");
+      console.error(err);
+    }
   };
+
   return (
-  <div className="fixed inset-0 z-10 flex items-center justify-center bg-black overflow-hidden min-h-screen w-screen">
+    <div className="fixed inset-0 z-10 flex items-center justify-center bg-black overflow-hidden min-h-screen w-screen">
       {/* Gradient Blobs */}
       <style>{blobKeyframes}</style>
       <div className="absolute inset-0 -z-10">
@@ -70,12 +88,16 @@ const LoginPage = ({ onLogin }) => {
           <input
             type="email"
             placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="w-full px-5 py-3 rounded-xl border border-blue-700 bg-black/30 text-white placeholder-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-black/50 transition"
             autoComplete="email"
           />
           <input
             type="password"
             placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             className="w-full px-5 py-3 rounded-xl border border-blue-700 bg-black/30 text-white placeholder-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-black/50 transition"
             autoComplete="current-password"
           />
@@ -94,6 +116,11 @@ const LoginPage = ({ onLogin }) => {
             Continue with Google
           </button>
         </form>
+
+        {/* Link to Signup */}
+        <div className="mt-4 text-blue-300 text-sm cursor-pointer hover:underline" onClick={() => navigate("/signup")}>
+          Don't have an account? Sign up
+        </div>
         {/* Footer */}
         <div className="mt-8 text-xs text-blue-300 text-center">Welcome to AI ChatBot</div>
       </motion.div>

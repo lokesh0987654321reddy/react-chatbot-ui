@@ -1,47 +1,129 @@
 import React, { useState, useRef, useEffect } from "react";
-import { sendMessage } from "../services/chatService";
+import { streamChatOllama, streamChatOpenRouter, saveChat, getChatMessages, updateChatTitle } from "../services/chatService";
+import ModelSelector from "../components/ModelSelector";
+import { useChats } from "../context/ChatContext";
+import { useModels } from "../context/ModelContext";
 
 const Chatbot = () => {
-  const [messages, setMessages] = useState([
-    { text: "Hello! How can I help you today?", sender: "bot" }
-  ]);
+  const chatId = new URLSearchParams(window.location.search).get("session");
+
+  const { activeModel } = useModels();
+
+  const [messages, setMessages] = useState([]);
   const [typing, setTyping] = useState("");
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
+  const { updateChat } = useChats();
+
+
+  useEffect(() => {
+    console.log("Chat session ID:", chatId);
+    const fetchHistory = async () => {
+      if (!chatId) return;
+      try {
+        const history = await getChatMessages(chatId);
+        const formatted = history.map((msg) => ({
+          text: msg.content,
+          sender: msg.sender,
+        }));
+        setMessages(formatted);
+      } catch (err) {
+        console.error("Failed to fetch chat history", err);
+      }
+    };
+
+    fetchHistory();
+  }, [chatId]);
+
   const handleSend = async () => {
-    if (input.trim() === "" || loading) return;
+    const selectedModel = activeModel;
+    if (!input.trim()) return;
+
     const userMessage = input;
-    setMessages([...messages, { text: userMessage, sender: "user" }]);
+
+    setMessages((prev) => [
+      ...prev,
+      { text: userMessage, sender: "user" },
+      { text: "", sender: "bot" }
+    ]);
+
     setInput("");
-    setLoading(true);
-    setTyping("");
-    try {
-      const response = await sendMessage(userMessage);
-      const botText = response.response || "(No response)";
-      // Typing animation
-      let i = 0;
-      setTyping("");
-      const typeInterval = setInterval(() => {
-        i++;
-        setTyping(botText.slice(0, i));
-        if (i >= botText.length) {
-          clearInterval(typeInterval);
-          setMessages((prev) => [
-            ...prev,
-            { text: botText, sender: "bot" }
-          ]);
-          setTyping("");
-          setLoading(false);
+
+    let botText = "";
+
+    function generateChatTitle(text) {
+      return text
+        .split(" ")
+        .slice(0, 5)
+        .join(" ");
+    }
+
+    if (selectedModel.id === "llama3.2") {
+      streamChatOllama(
+        userMessage,
+        chatId,
+        (token) => {
+          botText += token;
+          setMessages((prev) => {
+            const updated = [...prev];
+            updated[updated.length - 1].text = botText;
+            return updated;
+          });
+        },
+        async () => {
+          try {
+            await saveChat(chatId, userMessage, botText);
+
+            const isFirstMessage = messages.filter(msg => msg.sender === "bot").length === 1;
+            if (isFirstMessage) {
+              const title = generateChatTitle(userMessage);
+              await updateChatTitle(chatId, title);
+
+              updateChat(parseInt(chatId), { title });
+            }
+          } catch (err) {
+            console.error("Failed to save chat", err);
+          }
+        },
+        (err) => {
+          console.error("Stream error", err);
         }
-      }, 25); // Adjust speed as needed
-    } catch (error) {
-      setMessages((prev) => [
-        ...prev,
-        { text: "Error: Unable to get response from server.", sender: "bot" }
-      ]);
-      setLoading(false);
+      );
+    } else {
+
+      streamChatOpenRouter(
+        userMessage,
+        chatId,
+        selectedModel ? selectedModel.id : "default-model",
+        (token) => {
+          botText += token;
+          setMessages((prev) => {
+            const updated = [...prev];
+            updated[updated.length - 1].text = botText;
+            return updated;
+          });
+        },
+        async () => {
+          try {
+            await saveChat(chatId, userMessage, botText);
+
+            const isFirstMessage = messages.filter(msg => msg.sender === "bot").length === 1;
+            if (isFirstMessage) {
+              const title = generateChatTitle(userMessage);
+              await updateChatTitle(chatId, title);
+
+              updateChat(parseInt(chatId), { title });
+            }
+          } catch (err) {
+            console.error("Failed to save chat", err);
+          }
+        },
+        (err) => {
+          console.error("Stream error", err);
+        }
+      );
     }
   };
 
@@ -60,7 +142,30 @@ const Chatbot = () => {
   }, [messages]);
 
   return (
-  <div className="w-full h-full bg-gradient-to-br from-blue-100 via-white to-blue-200 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 rounded-2xl shadow-2xl flex flex-col font-sans border border-blue-200 dark:border-gray-800">
+    <div className="w-full h-full bg-gradient-to-br from-blue-100 via-white to-blue-200 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 rounded-2xl shadow-2xl flex flex-col font-sans border border-blue-200 dark:border-gray-800">
+      <div className="
+    flex items-center justify-between
+    px-5 py-3
+    border-b border-blue-200 dark:border-gray-700
+     bg-white/80 dark:bg-gray-900/80
+    backdrop-blur
+    rounded-t-2xl
+
+  ">
+        {/* Active Model Info */}
+        <div className="flex items-center gap-3 text-sm">
+          <span className="px-2 py-1 rounded-full bg-blue-100 dark:bg-gray-800 text-xs">
+            {activeModel?.provider === "ollama" ? "🖥 Local" : "🌐 Cloud"}
+          </span>
+
+          <span className="font-semibold text-gray-700 dark:text-gray-200 truncate max-w-[220px]">
+            🧠 {activeModel?.label || "No model"}
+          </span>
+        </div>
+
+        {/* Model Selector */}
+        <ModelSelector />
+      </div>
       <div className="flex-1 p-6 overflow-y-auto min-h-[240px]">
         {messages.map((msg, idx) => (
           <div

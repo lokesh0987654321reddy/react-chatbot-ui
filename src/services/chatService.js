@@ -1,22 +1,98 @@
-// src/services/chatService.js
-// Service for accessing chat APIs
-
+import api from "./api";
 
 const API_BASE_URL = "http://127.0.0.1:8000";
 
-export async function sendMessage(message) {
-  // POST request to /chat endpoint with expected body
-  const response = await fetch(`${API_BASE_URL}/chat`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ message }),
-  });
-  if (!response.ok) {
-    throw new Error("API request failed");
-  }
-  return response.json();
+export function streamChatOpenRouter(message, chatId, model, onToken, onComplete, onError) {
+  const eventSource = new EventSource(
+    `${API_BASE_URL}/chat/stream/openrouter?message=${encodeURIComponent(message)}&chatId=${encodeURIComponent(chatId)}&model=${model}`,
+    { withCredentials: true }
+  );
+
+  eventSource.onmessage = (event) => {
+    if (event.data === "[DONE]") {
+      eventSource.close();
+      onComplete && onComplete();
+      return;
+    }
+
+    onToken(event.data);
+  };
+
+  eventSource.onerror = (err) => {
+    console.error("SSE error", err);
+    eventSource.close();
+    onError && onError(err);
+  };
+
+  return eventSource;
 }
 
-// Add more functions as needed for other API endpoints
+export function streamChatOllama(message, chatId, onToken, onComplete, onError) {
+  const eventSource = new EventSource(
+    `${API_BASE_URL}/chat/stream?message=${encodeURIComponent(message)}&chatId=${encodeURIComponent(chatId)}`,
+    { withCredentials: true }
+  );
+
+  eventSource.onmessage = (event) => {
+    if (event.data === "[DONE]") {
+      eventSource.close();
+      onComplete && onComplete();
+      return;
+    }
+
+    onToken(event.data);
+  };
+
+  eventSource.onerror = (err) => {
+    console.error("SSE error", err);
+    eventSource.close();
+    onError && onError(err);
+  };
+
+  return eventSource;
+}
+
+
+export async function saveChat(chatId, userText, botText) {
+  return api.post(`/chat/${chatId}/save`, {
+    user: userText,
+    bot: botText
+  });
+}
+
+export async function updateChatTitle(chatId, title) {
+  const res = await fetch(
+    `${API_BASE_URL}/chats/${chatId}/title?title=${encodeURIComponent(title)}`,
+    {
+      method: "PUT",
+      credentials: "include",
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error("Failed to update chat title");
+  }
+
+  return res.json();
+}
+
+
+export async function getChatMessages(chatId) {
+  try {
+    const response = await api.get(`/chat/${chatId}/messages`);
+    return response.data;
+  } catch (err) {
+    console.error("Failed to get chat messages", err);
+    return [];
+  }
+}
+
+export const fetchChatHistory = async () => {
+  const res = await api.get("/chat/history");
+  return res.data;
+};
+
+export const createNewChat = async () => {
+  const res = await api.post("/chat/new");
+  return res.data;
+};

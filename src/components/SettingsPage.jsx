@@ -1,11 +1,17 @@
 import React, { useContext, useState } from "react";
 import { ThemeContext } from "../context/ThemeContext";
+import { useNavigate } from "react-router-dom";
 
 const SettingsPage = () => {
+  const navigate = useNavigate();
   const { theme, setTheme } = useContext(ThemeContext);
   const [fontSize, setFontSize] = useState("medium");
   const [bubbleStyle, setBubbleStyle] = useState("round");
   const [model, setModel] = useState("gpt-3.5");
+
+  const handleLogout = () => {
+    navigate("/login");
+  }
 
   return (
   <div className="w-full h-full bg-gradient-to-br from-blue-100 via-white to-blue-200 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 rounded-2xl shadow-2xl flex flex-col font-sans border border-blue-200 dark:border-gray-800 justify-center mx-auto">
@@ -44,6 +50,11 @@ const SettingsPage = () => {
               <option value="llama">Llama</option>
               <option value="gemini">Gemini</option>
             </select>
+          </div>
+          <div className="text-center">
+            <button onClick={handleLogout} className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 via-purple-700 to-blue-400 text-white font-bold text-lg shadow-lg hover:shadow-blue-500/50 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              Logout
+            </button>
           </div>
         </div>
       </div>

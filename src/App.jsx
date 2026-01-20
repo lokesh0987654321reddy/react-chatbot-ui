@@ -4,6 +4,8 @@ import Chatbot from './components/Chatbot';
 import LandingPage from './components/LandingPage';
 import Sidebar from './components/Sidebar';
 import SettingsPage from './components/SettingsPage';
+import SignupPage from './components/SignupPage';
+import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
 function AppContent() {
@@ -14,11 +16,12 @@ function AppContent() {
       {!isLoginPage && <Sidebar />}
       <main className={isLoginPage ? "flex items-center justify-center h-screen w-full" : "flex-1 h-screen p-8 overflow-auto flex flex-col"}>
         <Routes>
-          <Route path="/" element={<LoginPageWithNav />} />
-          <Route path="/login" element={<LoginPageWithNav />} />
-          <Route path="/landing" element={<LandingPageWithNav />} />
-          <Route path="/chat" element={<Chatbot />} />
-          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/" element={<LoginPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+          <Route path="/landing" element={<ProtectedRoute><LandingPage /></ProtectedRoute>} />
+          <Route path="/chat" element={<ProtectedRoute><Chatbot /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
         </Routes>
       </main>
     </div>
@@ -31,17 +34,6 @@ function App() {
       <AppContent />
     </BrowserRouter>
   );
-}
-
-
-function LandingPageWithNav() {
-  const navigate = useNavigate();
-  return <LandingPage onStart={() => navigate('/chat')} />;
-}
-
-function LoginPageWithNav() {
-  const navigate = useNavigate();
-  return <LoginPage onLogin={() => navigate('/landing')} />;
 }
 
 export default App
