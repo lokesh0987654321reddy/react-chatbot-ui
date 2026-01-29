@@ -1,7 +1,9 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { loginUser } from "../services/authService";
+import { checkAuthThunk } from "../store/auth/authThunks";
 
 
 // Animated gradient blob CSS
@@ -27,19 +29,19 @@ const LoginPage = () => {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const { error, loading } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
 
     try {
-      const response = await loginUser(email, password);
-      navigate("/landing");
-    } catch (err) {
-      setError("Invalid email or password");
-      console.error(err);
-    }
+      await loginUser(email, password);
+      await dispatch(checkAuthThunk());
+      setTimeout(() => {
+        navigate("/landing", { replace: true });
+      }, 100);
+    } catch { }
   };
 
   return (

@@ -3,6 +3,8 @@ import { streamChatOllama, streamChatOpenRouter, saveChat, getChatMessages, upda
 import ModelSelector from "../components/ModelSelector";
 import { useChats } from "../context/ChatContext";
 import { useModels } from "../context/ModelContext";
+import { motion, AnimatePresence } from "framer-motion";
+
 
 const Chatbot = () => {
   const chatId = new URLSearchParams(window.location.search).get("session");
@@ -13,13 +15,14 @@ const Chatbot = () => {
   const [typing, setTyping] = useState("");
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const messagesEndRef = useRef(null);
+  const [useRag, setUseRag] = useState(false);
 
   const { updateChat } = useChats();
 
+  const messagesEndRef = useRef(null);
+
 
   useEffect(() => {
-    console.log("Chat session ID:", chatId);
     const fetchHistory = async () => {
       if (!chatId) return;
       try {
@@ -64,6 +67,7 @@ const Chatbot = () => {
       streamChatOllama(
         userMessage,
         chatId,
+        useRag,
         (token) => {
           botText += token;
           setMessages((prev) => {
@@ -97,6 +101,7 @@ const Chatbot = () => {
         userMessage,
         chatId,
         selectedModel ? selectedModel.id : "default-model",
+        useRag,
         (token) => {
           botText += token;
           setMessages((prev) => {
@@ -141,18 +146,32 @@ const Chatbot = () => {
     }
   }, [messages]);
 
+  useEffect(() => {
+    if (messages.length === 0) return;
+
+    setMessages(prev => [
+      ...prev,
+      {
+        text: useRag
+          ? "🧠 Resume Mode enabled. Answers will be based on your profile."
+          : "💬 Chat Mode enabled. Free conversation activated.",
+        sender: "system"
+      }
+    ]);
+  }, [useRag]);
+
+
   return (
     <div className="w-full h-full bg-gradient-to-br from-blue-100 via-white to-blue-200 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 rounded-2xl shadow-2xl flex flex-col font-sans border border-blue-200 dark:border-gray-800">
       <div className="
-    flex items-center justify-between
-    px-5 py-3
-    border-b border-blue-200 dark:border-gray-700
-     bg-white/80 dark:bg-gray-900/80
-    backdrop-blur
-    rounded-t-2xl
-
-  ">
-        {/* Active Model Info */}
+  flex items-center justify-between
+  px-5 py-3
+  border-b border-blue-200 dark:border-gray-700
+  bg-white/80 dark:bg-gray-900/80
+  backdrop-blur
+  rounded-t-2xl
+">
+        {/* Left: Model info */}
         <div className="flex items-center gap-3 text-sm">
           <span className="px-2 py-1 rounded-full bg-blue-100 dark:bg-gray-800 text-xs">
             {activeModel?.provider === "ollama" ? "🖥 Local" : "🌐 Cloud"}
@@ -161,10 +180,64 @@ const Chatbot = () => {
           <span className="font-semibold text-gray-700 dark:text-gray-200 truncate max-w-[220px]">
             🧠 {activeModel?.label || "No model"}
           </span>
+
+          {/* RAG badge */}
+          {useRag ? (
+            <span className="px-2 py-1 rounded-full bg-green-100 text-green-700 text-xs">
+              🧠 Resume Mode
+            </span>
+          ) : (
+            <span className="px-2 py-1 rounded-full bg-gray-100 text-gray-600 text-xs">
+              💬 Chat Mode
+            </span>
+          )}
         </div>
 
-        {/* Model Selector */}
-        <ModelSelector />
+        {/* Right: Toggle + Model Selector */}
+        <div className="flex items-center gap-4">
+          {/* RAG Toggle */}
+          <motion.div
+            className="relative w-[9rem] h-9 rounded-full bg-gray-200 dark:bg-gray-700 cursor-pointer flex items-center px-1"
+            onClick={() => setUseRag(!useRag)}
+            whileTap={{ scale: 0.95 }}
+          >
+            {/* Sliding pill */}
+            <motion.div
+              layout
+              transition={{
+                type: "spring",
+                stiffness: 500,
+                damping: 30
+              }}
+              className={`absolute top-1 left-1 w-16 h-7 rounded-full shadow-md ${useRag
+                ? "bg-green-500"
+                : "bg-blue-500"
+                }`}
+              style={{
+                x: useRag ? 64 : 0
+              }}
+            />
+
+            {/* Labels */}
+            <div className="relative z-10 flex w-full text-xs font-semibold">
+              <span
+                className={`w-1/2 text-center transition-colors ${!useRag ? "text-white" : "text-gray-600"
+                  }`}
+              >
+                💬 Chat
+              </span>
+              <span
+                className={`w-1/2 text-center transition-colors ${useRag ? "text-white" : "text-gray-600"
+                  }`}
+              >
+                🧠 RAG
+              </span>
+            </div>
+          </motion.div>
+
+
+          <ModelSelector />
+        </div>
       </div>
       <div className="flex-1 p-6 overflow-y-auto min-h-[240px]">
         {messages.map((msg, idx) => (

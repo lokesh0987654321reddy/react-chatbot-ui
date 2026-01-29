@@ -1,6 +1,9 @@
 import React, { useContext, useState } from "react";
 import { ThemeContext } from "../context/ThemeContext";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { logoutUser } from "../services/authService";
+import { clearAuth } from "../store/auth/authSlice";
 
 const SettingsPage = () => {
   const navigate = useNavigate();
@@ -9,12 +12,16 @@ const SettingsPage = () => {
   const [bubbleStyle, setBubbleStyle] = useState("round");
   const [model, setModel] = useState("gpt-3.5");
 
-  const handleLogout = () => {
+  const dispatch = useDispatch();
+
+  const handleLogout = async () => {
+    await logoutUser();
+    dispatch(clearAuth());
     navigate("/login");
   }
 
   return (
-  <div className="w-full h-full bg-gradient-to-br from-blue-100 via-white to-blue-200 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 rounded-2xl shadow-2xl flex flex-col font-sans border border-blue-200 dark:border-gray-800 justify-center mx-auto">
+    <div className="w-full h-full bg-gradient-to-br from-blue-100 via-white to-blue-200 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 rounded-2xl shadow-2xl flex flex-col font-sans border border-blue-200 dark:border-gray-800 justify-center mx-auto">
       <div className="flex-1 p-8 flex flex-col items-center justify-center min-h-[240px]">
         <h2 className="text-3xl font-extrabold mb-8 text-blue-700 dark:text-white text-center drop-shadow">⚙️ Settings</h2>
         <div className="space-y-8 w-full max-w-md">

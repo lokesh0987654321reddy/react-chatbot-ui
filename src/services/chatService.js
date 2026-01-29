@@ -1,10 +1,8 @@
-import api from "./api";
+import { api, API_BASE_URL } from "./api";
 
-const API_BASE_URL = "http://127.0.0.1:8000";
-
-export function streamChatOpenRouter(message, chatId, model, onToken, onComplete, onError) {
+export function streamChatOpenRouter(message, chatId, model, useRag, onToken, onComplete, onError) {
   const eventSource = new EventSource(
-    `${API_BASE_URL}/chat/stream/openrouter?message=${encodeURIComponent(message)}&chatId=${encodeURIComponent(chatId)}&model=${model}`,
+    `${API_BASE_URL}/chat/stream/openrouter?message=${encodeURIComponent(message)}&chatId=${encodeURIComponent(chatId)}&model=${model}&useRag=${useRag}`,
     { withCredentials: true }
   );
 
@@ -27,9 +25,9 @@ export function streamChatOpenRouter(message, chatId, model, onToken, onComplete
   return eventSource;
 }
 
-export function streamChatOllama(message, chatId, onToken, onComplete, onError) {
+export function streamChatOllama(message, chatId, useRag, onToken, onComplete, onError) {
   const eventSource = new EventSource(
-    `${API_BASE_URL}/chat/stream?message=${encodeURIComponent(message)}&chatId=${encodeURIComponent(chatId)}`,
+    `${API_BASE_URL}/chat/stream?message=${encodeURIComponent(message)}&chatId=${encodeURIComponent(chatId)}&useRag=${useRag}`,
     { withCredentials: true }
   );
 

@@ -8,4 +8,4 @@ const api = axios.create({
   withCredentials: true, // 🔥 always send cookies
 });
 
-export default api;
+export { api, API_BASE_URL };

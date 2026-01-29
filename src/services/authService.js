@@ -1,5 +1,5 @@
 import axios from "axios";
-import api from "./api";
+import { api } from "./api";
 
 export const registerUser = async (email, password) => {
     const response = await api.post(`/auth/register`, {
@@ -15,3 +15,7 @@ export const loginUser = async (email, password) => {
         password,
     });
 };
+
+export const logoutUser = async () => {
+    return await api.post(`/auth/logout`);
+}
